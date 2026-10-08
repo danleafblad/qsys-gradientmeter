@@ -23,6 +23,7 @@ Q-SYS Designer 10.x.
 | Full Blue At (dB) | Default −48. Between Fade In From and here the LED brightens from dark to deep blue |
 | Full Red At (dB) | Default 0. At and above this the LED is solid red |
 | Release (dB/s) | Default 20. How fast the color falls back after a peak (rise is instant) |
+| Peak Hold (s) | Default 0 (off). Holds the peak color this long before the release starts |
 | Diagnostics | Off, Log (prints each channel's level and color once a second), or Color Sweep (cycles every LED through the gradient, ignoring the input) |
 
 ## Feeding it audio levels

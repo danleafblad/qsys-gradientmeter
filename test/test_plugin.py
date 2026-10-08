@@ -206,3 +206,41 @@ def test_timer_survives_garbage_collection(plugin):
     plugin.tick(100)
     r, g, b = rgb(c.led_1.Color)
     assert b > r
+
+
+def test_peak_hold_is_off_by_default(plugin):
+    c = plugin.boot(Channels=1)
+    set_level(c, 1, 0)
+    plugin.tick()
+    set_level(c, 1, -100)
+    plugin.tick()           # release starts on the very next update
+    assert rgb(c.led_1.Color) != (255, 0, 0)
+
+
+def test_peak_hold_keeps_peak_color_then_releases(plugin):
+    c = plugin.boot(Channels=1, overrides={"Peak Hold (s)": 1.0})
+    set_level(c, 1, 0)
+    plugin.tick()
+    set_level(c, 1, -100)
+    plugin.tick(20)         # 1 s of hold at 20 updates/s
+    assert rgb(c.led_1.Color) == (255, 0, 0)
+    plugin.tick()           # hold over, release begins
+    assert rgb(c.led_1.Color) != (255, 0, 0)
+    plugin.tick(100)
+    assert rgb(c.led_1.Color) == OFF
+
+
+def test_new_peak_restarts_hold(plugin):
+    c = plugin.boot(Channels=1, overrides={"Peak Hold (s)": 0.5})
+    set_level(c, 1, -10)
+    plugin.tick()
+    held = c.led_1.Color
+    set_level(c, 1, -100)
+    plugin.tick(8)
+    set_level(c, 1, -10)    # same level again before the hold runs out
+    plugin.tick()
+    set_level(c, 1, -100)
+    plugin.tick(10)         # a full hold from the second peak
+    assert c.led_1.Color == held
+    plugin.tick()
+    assert c.led_1.Color != held

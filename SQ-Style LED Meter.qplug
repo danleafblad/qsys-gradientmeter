@@ -7,8 +7,8 @@
 
 PluginInfo = {
   Name = "Meters~SQ-Style LED Meter",
-  Version = "2.4",
-  BuildVersion = "2.4.0.0",
+  Version = "2.5",
+  BuildVersion = "2.5.0.0",
   Id = "d43521a9-1f80-4857-89ea-9bc31db51c52",
   Author = "danleafblad",
   Description = "Single LED per channel that changes color from blue to red with audio level",
@@ -113,6 +113,8 @@ function GetProperties()
     { Name = "Full Blue At (dB)", Type = "integer", Min = -100, Max = 0, Value = -48 },
     { Name = "Full Red At (dB)", Type = "integer", Min = -60, Max = 20, Value = 0 },
     { Name = "Release (dB/s)", Type = "integer", Min = 1, Max = 200, Value = 20 },
+    -- Seconds to hold the peak color before the release starts (0 = off)
+    { Name = "Peak Hold (s)", Type = "double", Min = 0, Max = 10, Value = 0 },
     -- Log: prints each channel's level and LED color once a second.
     -- Color Sweep: ignores the inputs and cycles every LED through the gradient.
     { Name = "Diagnostics", Type = "enum", Choices = { "Off", "Log", "Color Sweep" }, Value = "Off" },
@@ -258,12 +260,14 @@ if Controls then
   local FADE = math.min(Properties["Fade In From (dB)"].Value, LO - 1)
   local HI = math.max(Properties["Full Red At (dB)"].Value, LO + 1)
   local FALL = Properties["Release (dB/s)"].Value * RATE
+  local HOLD_TICKS = math.floor(Properties["Peak Hold (s)"].Value / RATE + 0.5)
   print(string.format("SQ-Style LED Meter: fade in from %d dB, full blue at %d dB, full red at %d dB, release %d dB/s",
     FADE, LO, HI, Properties["Release (dB/s)"].Value))
+  print(string.format("SQ-Style LED Meter: peak hold %.2f s", HOLD_TICKS * RATE))
 
   local ch = {}
   for c = 1, N do
-    ch[c] = { display = FLOOR, led = Controls["led_" .. c], color = nil, src = nil, err = nil }
+    ch[c] = { display = FLOOR, hold = 0, led = Controls["led_" .. c], color = nil, src = nil, err = nil }
   end
 
   local function updateStatus()
@@ -336,10 +340,13 @@ if Controls then
       local m = ch[c]
       local lvl = m.src and m.src.Value or Controls["level_" .. c].Value
 
-      -- Ballistics: instant attack, constant-rate release, so the color
-      -- glides back down instead of flickering with every transient
+      -- Ballistics: instant attack, optional peak hold, then constant-rate
+      -- release, so the color glides back down instead of flickering
       if lvl >= m.display then
         m.display = lvl
+        m.hold = HOLD_TICKS
+      elseif m.hold > 0 then
+        m.hold = m.hold - 1
       else
         m.display = math.max(lvl, m.display - FALL)
       end
