@@ -12,7 +12,9 @@ PLUGIN = Path(__file__).resolve().parent.parent / "SQ-Style LED Meter.qplug"
 
 MOCK_LUA = r"""
 local function newControl(def)
-  local c = { Name = def.Name, Value = def.DefaultValue or def.Min or 0, String = "",
+  -- Designer ignores DefaultValue in plugin control definitions: knobs start
+  -- at their Min, so the mock does too (that bug shipped once already).
+  local c = { Name = def.Name, Value = def.Min or 0, String = "",
               Boolean = false, Color = nil, EventHandler = nil }
   if type(c.Value) == "boolean" then c.Boolean = c.Value; c.Value = c.Boolean and 1 or 0 end
   if def.ControlType == "Button" then c.Boolean = (c.Value ~= 0) end
@@ -56,13 +58,18 @@ class Plugin:
         self.lua.execute(self.src)
         self.g = self.lua.globals()
 
-    def props(self, page_index=1, **overrides):
+    def props(self, page_index=1, overrides=None, **kw):
+        """Default properties; override by exact name in `overrides`, or by
+        keyword with underscores for spaces (Channels=4, LED_Size=24)."""
         props = self.lua.table()
         for p in self.g.GetProperties().values():
             entry = self.lua.table(Value=p.Value)
             props[p.Name] = entry
-        for k, v in overrides.items():
-            props[k.replace("_", " ")].Value = v
+        named = {k.replace("_", " "): v for k, v in kw.items()}
+        named.update(overrides or {})
+        for k, v in named.items():
+            assert props[k] is not None, f"no property {k!r}"
+            props[k].Value = v
         props["page_index"] = self.lua.table(Value=page_index)
         return props
 
@@ -73,9 +80,9 @@ class Plugin:
         layout, graphics = self.g.GetControlLayout(props)
         return dict(layout.items()), list(graphics.values())
 
-    def boot(self, components=None, **overrides):
+    def boot(self, components=None, overrides=None, **kw):
         """Run the plugin's runtime section with mocked Q-SYS globals."""
-        props = self.props(**overrides)
+        props = self.props(overrides=overrides, **kw)
         comps = self.lua.table()
         for name, ctrls in (components or {}).items():
             t = self.lua.table()

@@ -88,12 +88,43 @@ def test_release_fades_color_back_down(plugin):
     assert c.led_1.Boolean is False
 
 
-def test_range_controls_rescale_colors(plugin):
-    c = plugin.boot(Channels=1)
-    c.min_db.Value, c.max_db.Value = -20, -10
+def test_range_properties_rescale_colors(plugin):
+    c = plugin.boot(Channels=1, overrides={"Off Below (dB)": -20, "Full Red At (dB)": -10})
+    set_level(c, 1, -21)
+    plugin.tick()
+    assert c.led_1.Boolean is False
     set_level(c, 1, -10)
     plugin.tick()
     assert rgb(c.led_1.Color) == (255, 0, 0)
+
+
+def test_mid_level_is_not_red_with_default_properties(plugin):
+    # Regression: in Designer the LED stayed red because the range and release
+    # knobs started at their Min values instead of their intended defaults.
+    c = plugin.boot(Channels=1)
+    set_level(c, 1, -30)
+    plugin.tick()
+    r, g, b = rgb(c.led_1.Color)
+    assert b > r
+
+
+def test_color_recovers_quickly_after_a_peak(plugin):
+    c = plugin.boot(Channels=1)
+    set_level(c, 1, 20)
+    plugin.tick()
+    set_level(c, 1, -30)
+    plugin.tick(60)         # 3 s at 20 dB/s is 60 dB, back down to -30
+    r, g, b = rgb(c.led_1.Color)
+    assert b > r
+
+
+def test_release_property_sets_fall_rate(plugin):
+    c = plugin.boot(Channels=1, overrides={"Release (dB/s)": 200})
+    set_level(c, 1, 0)
+    plugin.tick()
+    set_level(c, 1, -100)
+    plugin.tick(5)          # 200 dB/s * 0.25 s = 50 dB, below the -48 floor
+    assert c.led_1.Boolean is False
 
 
 def test_named_component_source(plugin):

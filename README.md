@@ -19,6 +19,9 @@ Q-SYS Designer 10.x.
 | Color Scheme | Blue to Red (SQ), Blue to Red (no green), Green to Red (Classic) |
 | LED Shape | Round or Square |
 | LED Size | 12–128 px |
+| Off Below (dB) | Default −48. Below this the LED is off; at it, deep blue |
+| Full Red At (dB) | Default 0. At and above this the LED is solid red |
+| Release (dB/s) | Default 20. How fast the color falls back after a peak (rise is instant) |
 
 ## Feeding it audio levels
 
@@ -44,17 +47,8 @@ for _, c in ipairs(Component.GetControls(Component.New("MyMeter"))) do print(c.N
 
 Open the plugin's **LEDs** page and copy the LEDs (and names, if you want them)
 onto your UCI page. The script sets each LED's color live, so it looks the same
-in any UCI theme.
-
-## Runtime controls (Setup page)
-
-| Control | Default | What it does |
-|---|---|---|
-| Blue at / off below | −48 dB | Bottom of the range. Below this the LED is off; at it, deep blue |
-| Full red at | 0 dB | Top of the range. At and above this the LED is solid red |
-| Release | 20 dB/s | How fast the color falls back after a peak (rise is instant) |
-
-All of these have control pins, so they can also be driven from logic.
+in any UCI theme. When the design starts, the debug output prints the range and
+release in use.
 
 ## Development
 

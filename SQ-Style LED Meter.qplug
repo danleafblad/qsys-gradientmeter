@@ -7,8 +7,8 @@
 
 PluginInfo = {
   Name = "Meters~SQ-Style LED Meter",
-  Version = "2.0",
-  BuildVersion = "2.0.0.0",
+  Version = "2.1",
+  BuildVersion = "2.1.0.0",
   Id = "d43521a9-1f80-4857-89ea-9bc31db51c52",
   Author = "danleafblad",
   Description = "Single LED per channel that changes color from blue to red with audio level",
@@ -95,6 +95,9 @@ function GetProperties()
     { Name = "Color Scheme", Type = "enum", Choices = SCHEME_NAMES, Value = SCHEME_NAMES[1] },
     { Name = "LED Shape", Type = "enum", Choices = { "Round", "Square" }, Value = "Round" },
     { Name = "LED Size", Type = "integer", Min = 12, Max = 128, Value = 36 },
+    { Name = "Off Below (dB)", Type = "integer", Min = -100, Max = 0, Value = -48 },
+    { Name = "Full Red At (dB)", Type = "integer", Min = -60, Max = 20, Value = 0 },
+    { Name = "Release (dB/s)", Type = "integer", Min = 1, Max = 200, Value = 20 },
   }
 end
 
@@ -124,18 +127,6 @@ function GetControls(props)
     })
   end
 
-  table.insert(ctrls, {
-    Name = "min_db", ControlType = "Knob", ControlUnit = "dB",
-    Min = -100, Max = 0, DefaultValue = -48, UserPin = true, PinStyle = "Input",
-  })
-  table.insert(ctrls, {
-    Name = "max_db", ControlType = "Knob", ControlUnit = "dB",
-    Min = -40, Max = 20, DefaultValue = 0, UserPin = true, PinStyle = "Input",
-  })
-  table.insert(ctrls, {
-    Name = "release", ControlType = "Knob", ControlUnit = "Float",
-    Min = 1, Max = 200, DefaultValue = 20, UserPin = true, PinStyle = "Input",
-  })
   table.insert(ctrls, {
     Name = "Status", ControlType = "Indicator", IndicatorType = "Status",
     UserPin = true, PinStyle = "Output",
@@ -216,9 +207,6 @@ function GetControlLayout(props)
 
     y = y + 10
     local globals = {
-      { "min_db", "Blue at / off below (dB)" },
-      { "max_db", "Full red at (dB)" },
-      { "release", "Release (dB/s)" },
       { "Status", "Status" },
     }
     for _, g in ipairs(globals) do
@@ -246,6 +234,13 @@ if Controls then
   local N = Properties["Channels"].Value
   local STOPS = SCHEMES[Properties["Color Scheme"].Value]
   local FLOOR = -120
+  -- Range and release are Properties, not controls: Designer doesn't apply a
+  -- control's DefaultValue, so knobs would start at their Min values.
+  local LO = Properties["Off Below (dB)"].Value
+  local HI = math.max(Properties["Full Red At (dB)"].Value, LO + 1)
+  local FALL = Properties["Release (dB/s)"].Value * RATE
+  print(string.format("SQ-Style LED Meter: off below %d dB, full red at %d dB, release %d dB/s",
+    LO, HI, Properties["Release (dB/s)"].Value))
 
   local ch = {}
   for c = 1, N do
@@ -293,10 +288,6 @@ if Controls then
   updateStatus()
 
   local function tick()
-    local lo, hi = Controls.min_db.Value, Controls.max_db.Value
-    if hi <= lo then hi = lo + 1 end
-    local fall = Controls.release.Value * RATE
-
     for c = 1, N do
       local m = ch[c]
       local lvl = m.src and m.src.Value or Controls["level_" .. c].Value
@@ -306,12 +297,12 @@ if Controls then
       if lvl >= m.display then
         m.display = lvl
       else
-        m.display = math.max(lvl, m.display - fall)
+        m.display = math.max(lvl, m.display - FALL)
       end
 
-      local on = m.display >= lo
+      local on = m.display >= LO
       if on then
-        local t = math.min((m.display - lo) / (hi - lo), 1)
+        local t = math.min((m.display - LO) / (HI - LO), 1)
         local color = ToHex(GradientRGB(STOPS, t))
         if color ~= m.color then
           m.led.Color = color
