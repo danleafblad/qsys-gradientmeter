@@ -2,6 +2,8 @@
 -- A single LED per channel whose color follows the audio level on a
 -- blue-to-red gradient, like the signal LEDs on an Allen & Heath SQ console.
 --
+-- Copyright (c) 2026 Dan Leafblad. MIT License, see LICENSE.
+--
 -- Install: copy this file to  Documents\QSC\Q-Sys Designer\Plugins\
 -- then restart Designer. It appears under Plugins > Meters.
 
@@ -10,7 +12,7 @@ PluginInfo = {
   Version = "2.5",
   BuildVersion = "2.5.0.0",
   Id = "d43521a9-1f80-4857-89ea-9bc31db51c52",
-  Author = "danleafblad",
+  Author = "Dan Leafblad",
   Description = "Single LED per channel that changes color from blue to red with audio level",
   ShowDebug = true,
 }

@@ -66,3 +66,7 @@ python3 tools/preview.py docs/preview.svg   # render the LEDs page
 
 To change the colors, edit the `SCHEMES` table near the top of the `.qplug`.
 If you do, also bump `BuildVersion` in `PluginInfo` so Designer picks up the change.
+
+## License
+
+MIT. See [LICENSE](LICENSE).
