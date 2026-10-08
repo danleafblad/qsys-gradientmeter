@@ -7,8 +7,8 @@
 
 PluginInfo = {
   Name = "Meters~SQ-Style LED Meter",
-  Version = "2.3",
-  BuildVersion = "2.3.0.0",
+  Version = "2.4",
+  BuildVersion = "2.4.0.0",
   Id = "d43521a9-1f80-4857-89ea-9bc31db51c52",
   Author = "danleafblad",
   Description = "Single LED per channel that changes color from blue to red with audio level",
@@ -64,8 +64,22 @@ function ToHex(rgb)
   return string.format("#%02X%02X%02X", rgb[1], rgb[2], rgb[3])
 end
 
--- Color shown when there is no signal (below Min dB)
-OFF_RGB = { 0x10, 0x14, 0x22 }
+-- Color shown when there is no signal (at or below Fade In From)
+OFF_RGB = { 0x08, 0x0A, 0x14 }
+
+-- Linear blend between two {R, G, B} colors
+function MixRGB(a, b, f)
+  local function ch(i) return math.floor(a[i] + (b[i] - a[i]) * f + 0.5) end
+  return { ch(1), ch(2), ch(3) }
+end
+
+-- Color for a level in dB: dark at or below fade, brightening to the first
+-- gradient color at lo, then along the gradient to the last color at hi
+function LevelRGB(stops, db, fade, lo, hi)
+  if db <= fade then return OFF_RGB end
+  if db < lo then return MixRGB(OFF_RGB, GradientRGB(stops, 0), (db - fade) / (lo - fade)) end
+  return GradientRGB(stops, math.min((db - lo) / (hi - lo), 1))
+end
 
 ---------------------------------------------------------------------------
 -- Design-time functions
@@ -95,7 +109,8 @@ function GetProperties()
     { Name = "Color Scheme", Type = "enum", Choices = SCHEME_NAMES, Value = SCHEME_NAMES[1] },
     { Name = "LED Shape", Type = "enum", Choices = { "Round", "Square" }, Value = "Round" },
     { Name = "LED Size", Type = "integer", Min = 12, Max = 128, Value = 36 },
-    { Name = "Off Below (dB)", Type = "integer", Min = -100, Max = 0, Value = -48 },
+    { Name = "Fade In From (dB)", Type = "integer", Min = -100, Max = 0, Value = -80 },
+    { Name = "Full Blue At (dB)", Type = "integer", Min = -100, Max = 0, Value = -48 },
     { Name = "Full Red At (dB)", Type = "integer", Min = -60, Max = 20, Value = 0 },
     { Name = "Release (dB/s)", Type = "integer", Min = 1, Max = 200, Value = 20 },
     -- Log: prints each channel's level and LED color once a second.
@@ -167,7 +182,7 @@ function GetControlLayout(props)
         PrettyName = "Ch " .. c .. "~LED",
         Style = "Led",
         Position = { cx - math.floor(size / 2), top }, Size = { size, size },
-        Color = GradientRGB(stops, 0), OffColor = OFF_RGB, UnlinkOffColor = true,
+        Color = OFF_RGB, OffColor = OFF_RGB, UnlinkOffColor = true,
         StrokeWidth = 1, StrokeColor = { 60, 60, 70 },
         CornerRadius = round and math.floor(size / 2) or 3, Margin = 0,
       }
@@ -239,15 +254,16 @@ if Controls then
   local FLOOR = -120
   -- Range and release are Properties, not controls: Designer doesn't apply a
   -- control's DefaultValue, so knobs would start at their Min values.
-  local LO = Properties["Off Below (dB)"].Value
+  local LO = Properties["Full Blue At (dB)"].Value
+  local FADE = math.min(Properties["Fade In From (dB)"].Value, LO - 1)
   local HI = math.max(Properties["Full Red At (dB)"].Value, LO + 1)
   local FALL = Properties["Release (dB/s)"].Value * RATE
-  print(string.format("SQ-Style LED Meter: off below %d dB, full red at %d dB, release %d dB/s",
-    LO, HI, Properties["Release (dB/s)"].Value))
+  print(string.format("SQ-Style LED Meter: fade in from %d dB, full blue at %d dB, full red at %d dB, release %d dB/s",
+    FADE, LO, HI, Properties["Release (dB/s)"].Value))
 
   local ch = {}
   for c = 1, N do
-    ch[c] = { display = FLOOR, led = Controls["led_" .. c], color = nil, on = nil, src = nil, err = nil }
+    ch[c] = { display = FLOOR, led = Controls["led_" .. c], color = nil, src = nil, err = nil }
   end
 
   local function updateStatus()
@@ -293,28 +309,25 @@ if Controls then
   local DIAG = Properties["Diagnostics"].Value
   local ticks = 0
 
-  -- Sets one channel's LED from a position along the gradient (nil = off)
-  local function show(m, t)
-    local on = t ~= nil
-    if on then
-      local color = ToHex(GradientRGB(STOPS, t))
-      if color ~= m.color then
-        m.led.Color = color
-        m.color = color
-      end
-    end
-    if on ~= m.on then
-      m.led.Boolean = on
-      m.on = on
+  -- The LED stays lit and its color alone shows the level (silence is a
+  -- near-black color), so it doesn't depend on how a theme draws "off".
+  for c = 1, N do ch[c].led.Boolean = true end
+
+  -- Sets one channel's LED to the color for a level in dB
+  local function show(m, db)
+    local color = ToHex(LevelRGB(STOPS, db, FADE, LO, HI))
+    if color ~= m.color then
+      m.led.Color = color
+      m.color = color
     end
   end
 
   local function sweep()
-    local t = (ticks % 80) / 79  -- bottom to top every 4 seconds
-    for c = 1, N do show(ch[c], t) end
+    local db = FADE + (HI - FADE) * ((ticks % 100) / 99)  -- silence to red every 5 seconds
+    for c = 1, N do show(ch[c], db) end
     if ticks % 20 == 0 then
-      print(string.format("sweep t=%.2f color=%s led_1.Color reads back %s",
-        t, ToHex(GradientRGB(STOPS, t)), tostring(ch[1].led.Color)))
+      print(string.format("sweep %.1f dB color=%s led_1.Color reads back %s",
+        db, ch[1].color, tostring(ch[1].led.Color)))
     end
   end
 
@@ -331,15 +344,11 @@ if Controls then
         m.display = math.max(lvl, m.display - FALL)
       end
 
-      if m.display >= LO then
-        show(m, math.min((m.display - LO) / (HI - LO), 1))
-      else
-        show(m, nil)
-      end
+      show(m, m.display)
 
       if DIAG == "Log" and ticks % 20 == 0 then
-        print(string.format("ch %d: in=%s level=%.1f display=%.1f led=%s color=%s (reads back %s)",
-          c, m.src and "component" or "pin", lvl, m.display, tostring(m.on),
+        print(string.format("ch %d: in=%s level=%.1f display=%.1f color=%s (reads back %s)",
+          c, m.src and "component" or "pin", lvl, m.display,
           tostring(m.color), tostring(m.led.Color)))
       end
     end

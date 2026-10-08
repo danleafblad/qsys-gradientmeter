@@ -13,7 +13,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "test"))
 from qsys_mock import Plugin  # noqa: E402
 
-DEMO = [-100, -44, -34, -24, -14, -8, -4, 0, -40, -18, -6, -1]
+DEMO = [-100, -70, -58, -44, -24, -12, -4, 0, -40, -18, -6, -1]
 
 
 def rgb(t):

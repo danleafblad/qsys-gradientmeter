@@ -8,6 +8,13 @@ def plugin():
     return Plugin()
 
 
+OFF = (0x08, 0x0A, 0x14)
+
+
+def brightness(color):
+    return sum(color)
+
+
 def rgb(hex_color):
     return tuple(int(hex_color[i:i + 2], 16) for i in (1, 3, 5))
 
@@ -51,12 +58,28 @@ def test_silence_turns_led_off(plugin):
     c = plugin.boot(Channels=1)
     set_level(c, 1, -100)
     plugin.tick()
-    assert c.led_1.Boolean is False
+    assert c.led_1.Boolean is True     # always lit; the color shows silence
+    assert rgb(c.led_1.Color) == OFF
+
+
+def test_fade_in_gets_brighter_below_blue(plugin):
+    # Regression: below the blue point the LED went straight to a flat color.
+    # Between Fade In From (-80) and Full Blue At (-48) it should brighten.
+    c = plugin.boot(Channels=1)
+    seen = []
+    for db in (-80, -72, -64, -56, -48):
+        set_level(c, 1, db)
+        plugin.tick()
+        seen.append(rgb(c.led_1.Color))
+    assert seen[0] == OFF
+    levels = [brightness(x) for x in seen]
+    assert levels == sorted(levels) and len(set(levels)) == len(levels)
+    assert all(b >= r for r, g, b in seen)     # stays in the blue family
 
 
 def test_low_level_is_blue_and_top_is_red(plugin):
     c = plugin.boot(Channels=2)
-    set_level(c, 1, -47)   # just above the default -48 floor
+    set_level(c, 1, -47)   # just above the default -48 full-blue point
     set_level(c, 2, 6)     # past the 0 dB top of the range
     plugin.tick()
     r, g, b = rgb(c.led_1.Color)
@@ -85,14 +108,15 @@ def test_release_fades_color_back_down(plugin):
     plugin.tick(20)         # ~21 dB down after a second
     assert rgb(c.led_1.Color)[0] < r1
     plugin.tick(60)         # long gone
-    assert c.led_1.Boolean is False
+    assert rgb(c.led_1.Color) == OFF
 
 
 def test_range_properties_rescale_colors(plugin):
-    c = plugin.boot(Channels=1, overrides={"Off Below (dB)": -20, "Full Red At (dB)": -10})
-    set_level(c, 1, -21)
+    c = plugin.boot(Channels=1, overrides={
+        "Fade In From (dB)": -30, "Full Blue At (dB)": -20, "Full Red At (dB)": -10})
+    set_level(c, 1, -30)
     plugin.tick()
-    assert c.led_1.Boolean is False
+    assert rgb(c.led_1.Color) == OFF
     set_level(c, 1, -10)
     plugin.tick()
     assert rgb(c.led_1.Color) == (255, 0, 0)
@@ -123,8 +147,8 @@ def test_release_property_sets_fall_rate(plugin):
     set_level(c, 1, 0)
     plugin.tick()
     set_level(c, 1, -100)
-    plugin.tick(5)          # 200 dB/s * 0.25 s = 50 dB, below the -48 floor
-    assert c.led_1.Boolean is False
+    plugin.tick(8)          # 200 dB/s * 0.4 s = 80 dB, down to the -80 fade floor
+    assert rgb(c.led_1.Color) == OFF
 
 
 def test_named_component_source(plugin):
@@ -152,18 +176,18 @@ def test_color_sweep_ignores_input(plugin):
     c = plugin.boot(Channels=2, overrides={"Diagnostics": "Color Sweep"})
     set_level(c, 1, -100)
     seen = set()
-    for _ in range(80):
+    for _ in range(100):
         plugin.tick()
         seen.add(c.led_2.Color)
-    assert c.led_1.Boolean and len(seen) > 40
-    assert "#FF0000" in seen
+    assert len(seen) > 50
+    assert "#FF0000" in seen and "#080A14" in seen
 
 
 def test_log_mode_runs(plugin):
     c = plugin.boot(Channels=2, overrides={"Diagnostics": "Log"})
     set_level(c, 1, -10)
     plugin.tick(40)
-    assert c.led_1.Boolean
+    assert rgb(c.led_1.Color) != OFF
 
 
 def test_runtime_error_is_reported_not_fatal(plugin):
