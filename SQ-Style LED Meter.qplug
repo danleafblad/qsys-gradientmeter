@@ -7,8 +7,8 @@
 
 PluginInfo = {
   Name = "Meters~SQ-Style LED Meter",
-  Version = "2.1",
-  BuildVersion = "2.1.0.0",
+  Version = "2.2",
+  BuildVersion = "2.2.0.0",
   Id = "d43521a9-1f80-4857-89ea-9bc31db51c52",
   Author = "danleafblad",
   Description = "Single LED per channel that changes color from blue to red with audio level",
@@ -98,6 +98,9 @@ function GetProperties()
     { Name = "Off Below (dB)", Type = "integer", Min = -100, Max = 0, Value = -48 },
     { Name = "Full Red At (dB)", Type = "integer", Min = -60, Max = 20, Value = 0 },
     { Name = "Release (dB/s)", Type = "integer", Min = 1, Max = 200, Value = 20 },
+    -- Log: prints each channel's level and LED color once a second.
+    -- Color Sweep: ignores the inputs and cycles every LED through the gradient.
+    { Name = "Diagnostics", Type = "enum", Choices = { "Off", "Log", "Color Sweep" }, Value = "Off" },
   }
 end
 
@@ -287,7 +290,35 @@ if Controls then
   end
   updateStatus()
 
-  local function tick()
+  local DIAG = Properties["Diagnostics"].Value
+  local ticks = 0
+
+  -- Sets one channel's LED from a position along the gradient (nil = off)
+  local function show(m, t)
+    local on = t ~= nil
+    if on then
+      local color = ToHex(GradientRGB(STOPS, t))
+      if color ~= m.color then
+        m.led.Color = color
+        m.color = color
+      end
+    end
+    if on ~= m.on then
+      m.led.Boolean = on
+      m.on = on
+    end
+  end
+
+  local function sweep()
+    local t = (ticks % 80) / 79  -- bottom to top every 4 seconds
+    for c = 1, N do show(ch[c], t) end
+    if ticks % 20 == 0 then
+      print(string.format("sweep t=%.2f color=%s led_1.Color reads back %s",
+        t, ToHex(GradientRGB(STOPS, t)), tostring(ch[1].led.Color)))
+    end
+  end
+
+  local function meter()
     for c = 1, N do
       local m = ch[c]
       local lvl = m.src and m.src.Value or Controls["level_" .. c].Value
@@ -300,22 +331,33 @@ if Controls then
         m.display = math.max(lvl, m.display - FALL)
       end
 
-      local on = m.display >= LO
-      if on then
-        local t = math.min((m.display - LO) / (HI - LO), 1)
-        local color = ToHex(GradientRGB(STOPS, t))
-        if color ~= m.color then
-          m.led.Color = color
-          m.color = color
-        end
+      if m.display >= LO then
+        show(m, math.min((m.display - LO) / (HI - LO), 1))
+      else
+        show(m, nil)
       end
-      if on ~= m.on then
-        m.led.Boolean = on
-        m.on = on
+
+      if DIAG == "Log" and ticks % 20 == 0 then
+        print(string.format("ch %d: in=%s level=%.1f display=%.1f led=%s color=%s (reads back %s)",
+          c, m.src and "component" or "pin", lvl, m.display, tostring(m.on),
+          tostring(m.color), tostring(m.led.Color)))
       end
     end
   end
 
+  local lastErr = nil
+  local function tick()
+    ticks = ticks + 1
+    local ok, err = pcall(DIAG == "Color Sweep" and sweep or meter)
+    if not ok and err ~= lastErr then
+      print("SQ-Style LED Meter error: " .. tostring(err))
+      Controls.Status.Value = 2
+      Controls.Status.String = "Script error: " .. tostring(err)
+    end
+    lastErr = (not ok) and err or nil
+  end
+
+  print("SQ-Style LED Meter " .. PluginInfo.Version .. ": " .. N .. " channels, diagnostics " .. DIAG)
   local timer = Timer.New()
   timer.EventHandler = tick
   timer:Start(RATE)

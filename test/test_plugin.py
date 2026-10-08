@@ -146,3 +146,28 @@ def test_missing_component_reports_fault(plugin):
     assert c.Status.Value == 2
     assert "Ch 2" in c.Status.String
     plugin.tick()  # falls back to the pin, must not error
+
+
+def test_color_sweep_ignores_input(plugin):
+    c = plugin.boot(Channels=2, overrides={"Diagnostics": "Color Sweep"})
+    set_level(c, 1, -100)
+    seen = set()
+    for _ in range(80):
+        plugin.tick()
+        seen.add(c.led_2.Color)
+    assert c.led_1.Boolean and len(seen) > 40
+    assert "#FF0000" in seen
+
+
+def test_log_mode_runs(plugin):
+    c = plugin.boot(Channels=2, overrides={"Diagnostics": "Log"})
+    set_level(c, 1, -10)
+    plugin.tick(40)
+    assert c.led_1.Boolean
+
+
+def test_runtime_error_is_reported_not_fatal(plugin):
+    c = plugin.boot(Channels=1)
+    plugin.lua.execute("Controls.level_1.Value = nil")
+    plugin.tick()
+    assert c.Status.Value == 2 and "Script error" in c.Status.String
