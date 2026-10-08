@@ -7,8 +7,8 @@
 
 PluginInfo = {
   Name = "Meters~SQ-Style LED Meter",
-  Version = "2.2",
-  BuildVersion = "2.2.0.0",
+  Version = "2.3",
+  BuildVersion = "2.3.0.0",
   Id = "d43521a9-1f80-4857-89ea-9bc31db51c52",
   Author = "danleafblad",
   Description = "Single LED per channel that changes color from blue to red with audio level",
@@ -358,7 +358,9 @@ if Controls then
   end
 
   print("SQ-Style LED Meter " .. PluginInfo.Version .. ": " .. N .. " channels, diagnostics " .. DIAG)
-  local timer = Timer.New()
-  timer.EventHandler = tick
-  timer:Start(RATE)
+  -- Must be global: a local timer is garbage collected once this script
+  -- finishes loading, which silently stops the LEDs a few seconds after start.
+  MeterTimer = Timer.New()
+  MeterTimer.EventHandler = tick
+  MeterTimer:Start(RATE)
 end

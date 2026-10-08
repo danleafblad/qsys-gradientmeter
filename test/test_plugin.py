@@ -171,3 +171,14 @@ def test_runtime_error_is_reported_not_fatal(plugin):
     plugin.lua.execute("Controls.level_1.Value = nil")
     plugin.tick()
     assert c.Status.Value == 2 and "Script error" in c.Status.String
+
+
+def test_timer_survives_garbage_collection(plugin):
+    # Regression: the meter timer was a local, so Q-SYS garbage collected it a
+    # few seconds after start and the LEDs froze (sweep ran once, then stopped).
+    c = plugin.boot(Channels=1)
+    plugin.tick()
+    set_level(c, 1, -30)
+    plugin.tick(100)
+    r, g, b = rgb(c.led_1.Color)
+    assert b > r

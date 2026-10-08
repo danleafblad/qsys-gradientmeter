@@ -25,7 +25,9 @@ function MockBoot(controlDefs, props, components)
   Controls = {}
   for _, d in ipairs(controlDefs) do Controls[d.Name] = newControl(d) end
   Properties = props
-  MockTimers = {}
+  -- Weak table: like Q-SYS, a timer the script doesn't keep a reference to
+  -- gets garbage collected and stops firing.
+  MockTimers = setmetatable({}, { __mode = "v" })
   Timer = { New = function()
     local t = { EventHandler = nil, rate = nil }
     function t:Start(r) self.rate = r end
@@ -41,9 +43,10 @@ function MockBoot(controlDefs, props, components)
 end
 
 function MockTick(n)
+  collectgarbage("collect")
   for _ = 1, n or 1 do
-    for _, t in ipairs(MockTimers) do
-      if t.rate and t.EventHandler then t.EventHandler(t) end
+    for _, t in pairs(MockTimers) do
+      if t and t.rate and t.EventHandler then t.EventHandler(t) end
     end
   end
 end
