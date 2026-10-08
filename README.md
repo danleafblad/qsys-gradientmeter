@@ -1,22 +1,22 @@
-# qsys-gradientmeter: SQ-Style LED Meter (Q-SYS plugin)
+# qsys-gradientmeter: Gradient LED Meter (Q-SYS plugin)
 
 One LED per channel whose color follows the audio level: dark when there is no
 signal, fading up to blue, through green and yellow, to red at the top of the range.
-It's modelled on the signal LEDs of an Allen & Heath SQ console and built for
+It's inspired by the signal LEDs on an Allen & Heath SQ console and built for
 Q-SYS Designer 10.x.
 
 ![preview](docs/preview.png)
 
 ## Install
 
-1. Copy `SQ-Style LED Meter.qplug` to `Documents\QSC\Q-Sys Designer\Plugins\`.
+1. Copy `Gradient LED Meter.qplug` to `Documents\QSC\Q-Sys Designer\Plugins\`.
 2. Restart Designer. The plugin is under **Schematic Library → Plugins → Meters**.
 3. Drag it into the schematic and set its properties:
 
 | Property | Options |
 |---|---|
 | Channels | 1–64 LEDs |
-| Color Scheme | Blue to Red (SQ), Blue to Red (no green), Green to Red (Classic) |
+| Color Scheme | Blue to Red, Blue to Red (no green), Green to Red (Classic) |
 | LED Shape | Round or Square |
 | LED Size | 12–128 px |
 | Fade In From (dB) | Default −80. At and below this the LED is near-black (silence) |

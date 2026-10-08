@@ -1,28 +1,28 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="856" height="204" viewBox="0 0 428 102" font-family="Arial, sans-serif">
 <rect x="0" y="0" width="428" height="102" rx="6" fill="rgb(22,22,26)"/>
-<text x="8" y="16.0" dominant-baseline="middle" text-anchor="start" font-size="12" fill="rgb(200,200,210)">SQ-Style LED Meter</text>
+<text x="8" y="16.0" dominant-baseline="middle" text-anchor="start" font-size="12" fill="rgb(200,200,210)">Gradient LED Meter</text>
+<rect x="373" y="74" width="46" height="18" rx="2" fill="rgb(40,40,46)"/>
+<text x="396.0" y="83.0" dominant-baseline="middle" text-anchor="middle" font-size="9" fill="rgb(230,230,230)">0 dB</text>
+<rect x="61" y="74" width="46" height="18" rx="2" fill="rgb(40,40,46)"/>
+<text x="84.0" y="83.0" dominant-baseline="middle" text-anchor="middle" font-size="9" fill="rgb(230,230,230)">-70 dB</text>
+<rect x="378" y="32" width="36" height="36" rx="18" fill="#FF0000" stroke="rgb(60,60,70)" stroke-width="1"/>
 <rect x="9" y="74" width="46" height="18" rx="2" fill="rgb(40,40,46)"/>
 <text x="32.0" y="83.0" dominant-baseline="middle" text-anchor="middle" font-size="9" fill="rgb(230,230,230)">off</text>
+<rect x="118" y="32" width="36" height="36" rx="18" fill="#0324B6" stroke="rgb(60,60,70)" stroke-width="1"/>
+<rect x="170" y="32" width="36" height="36" rx="18" fill="#004CFF" stroke="rgb(60,60,70)" stroke-width="1"/>
+<rect x="321" y="74" width="46" height="18" rx="2" fill="rgb(40,40,46)"/>
+<text x="344.0" y="83.0" dominant-baseline="middle" text-anchor="middle" font-size="9" fill="rgb(230,230,230)">-4 dB</text>
+<rect x="269" y="74" width="46" height="18" rx="2" fill="rgb(40,40,46)"/>
+<text x="292.0" y="83.0" dominant-baseline="middle" text-anchor="middle" font-size="9" fill="rgb(230,230,230)">-12 dB</text>
+<rect x="326" y="32" width="36" height="36" rx="18" fill="#FF5D00" stroke="rgb(60,60,70)" stroke-width="1"/>
+<rect x="222" y="32" width="36" height="36" rx="18" fill="#00C6BF" stroke="rgb(60,60,70)" stroke-width="1"/>
+<rect x="165" y="74" width="46" height="18" rx="2" fill="rgb(40,40,46)"/>
+<text x="188.0" y="83.0" dominant-baseline="middle" text-anchor="middle" font-size="9" fill="rgb(230,230,230)">-44 dB</text>
+<rect x="66" y="32" width="36" height="36" rx="18" fill="#06165D" stroke="rgb(60,60,70)" stroke-width="1"/>
 <rect x="217" y="74" width="46" height="18" rx="2" fill="rgb(40,40,46)"/>
 <text x="240.0" y="83.0" dominant-baseline="middle" text-anchor="middle" font-size="9" fill="rgb(230,230,230)">-24 dB</text>
 <rect x="14" y="32" width="36" height="36" rx="18" fill="#080A14" stroke="rgb(60,60,70)" stroke-width="1"/>
-<rect x="321" y="74" width="46" height="18" rx="2" fill="rgb(40,40,46)"/>
-<text x="344.0" y="83.0" dominant-baseline="middle" text-anchor="middle" font-size="9" fill="rgb(230,230,230)">-4 dB</text>
-<rect x="165" y="74" width="46" height="18" rx="2" fill="rgb(40,40,46)"/>
-<text x="188.0" y="83.0" dominant-baseline="middle" text-anchor="middle" font-size="9" fill="rgb(230,230,230)">-44 dB</text>
-<rect x="378" y="32" width="36" height="36" rx="18" fill="#FF0000" stroke="rgb(60,60,70)" stroke-width="1"/>
-<rect x="373" y="74" width="46" height="18" rx="2" fill="rgb(40,40,46)"/>
-<text x="396.0" y="83.0" dominant-baseline="middle" text-anchor="middle" font-size="9" fill="rgb(230,230,230)">0 dB</text>
-<rect x="170" y="32" width="36" height="36" rx="18" fill="#004CFF" stroke="rgb(60,60,70)" stroke-width="1"/>
 <rect x="274" y="32" width="36" height="36" rx="18" fill="#AAD520" stroke="rgb(60,60,70)" stroke-width="1"/>
-<rect x="118" y="32" width="36" height="36" rx="18" fill="#0324B6" stroke="rgb(60,60,70)" stroke-width="1"/>
-<rect x="326" y="32" width="36" height="36" rx="18" fill="#FF5D00" stroke="rgb(60,60,70)" stroke-width="1"/>
-<rect x="269" y="74" width="46" height="18" rx="2" fill="rgb(40,40,46)"/>
-<text x="292.0" y="83.0" dominant-baseline="middle" text-anchor="middle" font-size="9" fill="rgb(230,230,230)">-12 dB</text>
-<rect x="222" y="32" width="36" height="36" rx="18" fill="#00C6BF" stroke="rgb(60,60,70)" stroke-width="1"/>
-<rect x="66" y="32" width="36" height="36" rx="18" fill="#06165D" stroke="rgb(60,60,70)" stroke-width="1"/>
-<rect x="61" y="74" width="46" height="18" rx="2" fill="rgb(40,40,46)"/>
-<text x="84.0" y="83.0" dominant-baseline="middle" text-anchor="middle" font-size="9" fill="rgb(230,230,230)">-70 dB</text>
 <rect x="113" y="74" width="46" height="18" rx="2" fill="rgb(40,40,46)"/>
 <text x="136.0" y="83.0" dominant-baseline="middle" text-anchor="middle" font-size="9" fill="rgb(230,230,230)">-58 dB</text>
 </svg>

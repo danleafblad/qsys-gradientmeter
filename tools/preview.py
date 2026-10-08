@@ -26,7 +26,7 @@ def main():
     ap.add_argument("out", nargs="?", default="preview.svg")
     ap.add_argument("--channels", type=int, default=8)
     ap.add_argument("--shape", default="Round")
-    ap.add_argument("--scheme", default="Blue to Red (SQ)")
+    ap.add_argument("--scheme", default="Blue to Red")
     a = ap.parse_args()
 
     p = Plugin()

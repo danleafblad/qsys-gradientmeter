@@ -8,7 +8,7 @@ from pathlib import Path
 
 from lupa import LuaRuntime
 
-PLUGIN = Path(__file__).resolve().parent.parent / "SQ-Style LED Meter.qplug"
+PLUGIN = Path(__file__).resolve().parent.parent / "Gradient LED Meter.qplug"
 
 MOCK_LUA = r"""
 local function newControl(def)

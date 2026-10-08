@@ -1,6 +1,6 @@
--- SQ-Style LED Meter
+-- Gradient LED Meter
 -- A single LED per channel whose color follows the audio level on a
--- blue-to-red gradient, like the signal LEDs on an Allen & Heath SQ console.
+-- blue-to-red gradient, inspired by the signal LEDs on an Allen & Heath SQ console.
 --
 -- Copyright (c) 2026 Dan Leafblad. MIT License, see LICENSE.
 --
@@ -8,9 +8,9 @@
 -- then restart Designer. It appears under Plugins > Meters.
 
 PluginInfo = {
-  Name = "Meters~SQ-Style LED Meter",
-  Version = "2.5",
-  BuildVersion = "2.5.0.0",
+  Name = "Meters~Gradient LED Meter",
+  Version = "2.6",
+  BuildVersion = "2.6.0.0",
   Id = "d43521a9-1f80-4857-89ea-9bc31db51c52",
   Author = "Dan Leafblad",
   Description = "Single LED per channel that changes color from blue to red with audio level",
@@ -23,7 +23,7 @@ PluginInfo = {
 
 -- Color stops: position along the level range (0 = Min dB, 1 = Max dB), then R, G, B
 SCHEMES = {
-  ["Blue to Red (SQ)"] = {
+  ["Blue to Red"] = {
     { 0.00, 0x00, 0x30, 0xFF },  -- deep blue
     { 0.40, 0x00, 0xB4, 0xFF },  -- light blue
     { 0.65, 0x00, 0xE0, 0x60 },  -- green
@@ -45,7 +45,7 @@ SCHEMES = {
     { 1.00, 0xFF, 0x00, 0x00 },
   },
 }
-SCHEME_NAMES = { "Blue to Red (SQ)", "Blue to Red (no green)", "Green to Red (Classic)" }
+SCHEME_NAMES = { "Blue to Red", "Blue to Red (no green)", "Green to Red (Classic)" }
 
 -- Returns {R, G, B} for position t (0..1) along the gradient
 function GradientRGB(stops, t)
@@ -92,7 +92,7 @@ function GetColor(props)
 end
 
 function GetPrettyName(props)
-  return "SQ-Style LED Meter\n" .. props["Channels"].Value .. " ch"
+  return "Gradient LED Meter\n" .. props["Channels"].Value .. " ch"
 end
 
 PageNames = { "LEDs", "Setup" }
@@ -176,7 +176,7 @@ function GetControlLayout(props)
       Position = { 0, 0 }, Size = { width, height },
     })
     table.insert(graphics, {
-      Type = "Text", Text = "SQ-Style LED Meter", Color = { 200, 200, 210 },
+      Type = "Text", Text = "Gradient LED Meter", Color = { 200, 200, 210 },
       FontSize = 12, HTextAlign = "Left", Position = { 8, 6 }, Size = { math.max(width - 16, 120), 20 },
     })
 
@@ -263,9 +263,9 @@ if Controls then
   local HI = math.max(Properties["Full Red At (dB)"].Value, LO + 1)
   local FALL = Properties["Release (dB/s)"].Value * RATE
   local HOLD_TICKS = math.floor(Properties["Peak Hold (s)"].Value / RATE + 0.5)
-  print(string.format("SQ-Style LED Meter: fade in from %d dB, full blue at %d dB, full red at %d dB, release %d dB/s",
+  print(string.format("Gradient LED Meter: fade in from %d dB, full blue at %d dB, full red at %d dB, release %d dB/s",
     FADE, LO, HI, Properties["Release (dB/s)"].Value))
-  print(string.format("SQ-Style LED Meter: peak hold %.2f s", HOLD_TICKS * RATE))
+  print(string.format("Gradient LED Meter: peak hold %.2f s", HOLD_TICKS * RATE))
 
   local ch = {}
   for c = 1, N do
@@ -368,14 +368,14 @@ if Controls then
     ticks = ticks + 1
     local ok, err = pcall(DIAG == "Color Sweep" and sweep or meter)
     if not ok and err ~= lastErr then
-      print("SQ-Style LED Meter error: " .. tostring(err))
+      print("Gradient LED Meter error: " .. tostring(err))
       Controls.Status.Value = 2
       Controls.Status.String = "Script error: " .. tostring(err)
     end
     lastErr = (not ok) and err or nil
   end
 
-  print("SQ-Style LED Meter " .. PluginInfo.Version .. ": " .. N .. " channels, diagnostics " .. DIAG)
+  print("Gradient LED Meter " .. PluginInfo.Version .. ": " .. N .. " channels, diagnostics " .. DIAG)
   -- Must be global: a local timer is garbage collected once this script
   -- finishes loading, which silently stops the LEDs a few seconds after start.
   MeterTimer = Timer.New()
